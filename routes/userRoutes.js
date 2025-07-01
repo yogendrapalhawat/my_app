@@ -8,21 +8,34 @@ import {
   deleteUser
 } from '../controllers/userController.js';
 
+import { protect } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
 
-// Register
+// ✅ Register User
 router.post('/register', registerUser);
 
-// Login
+// ✅ Login User
 router.post('/login', loginUser);
 
-// Get all users
+// ✅ Get All Users (Public or make it protected later)
 router.get('/', getAllUsers);
 
-// Update user by ID
+// ✅ Get Logged-in User Profile (Protected Route)
+router.get('/profile', protect, (req, res) => {
+  res.json({
+    user: {
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email
+    }
+  });
+});
+
+// ✅ Update User by ID
 router.put('/:id', updateUser);
 
-// Delete user by ID
+// ✅ Delete User by ID
 router.delete('/:id', deleteUser);
 
 export default router;
