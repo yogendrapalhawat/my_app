@@ -7,38 +7,39 @@ import {
   updateUser,
   deleteUser
 } from '../controllers/userController.js';
+
 import { protect } from '../middlewares/authMiddleware.js';
-import { User } from '../DB.SCHEMA/User.js'; // 👈 Add this line to fetch user from DB
+import { adminOnly } from '../middlewares/adminMiddleware.js';
+import { User } from '../DB.SCHEMA/User.js';
 
 const router = express.Router();
 
-// ✅ Register User
+// ✅ Public: Register
 router.post('/register', registerUser);
 
-// ✅ Login User
+// ✅ Public: Login
 router.post('/login', loginUser);
 
-// ✅ Get All Users (public)
-router.get('/', getAllUsers);
-
-// ✅ Get Logged-in User Profile (Protected Route)
+// ✅ Protected: Get Logged-in User Profile
 router.get('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    res.json({ user }); // 👈 returning full user object
+    res.json({ user });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching user profile' });
   }
 });
 
-// ✅ Update User by ID
-router.put('/:id', updateUser);
+// ✅ Admin Only: Get All Users
+router.get('/', protect, adminOnly, getAllUsers);
 
-// ✅ Delete User by ID
-router.delete('/:id', deleteUser);
+// ✅ Admin Only: Delete User
+router.delete('/:id', protect, adminOnly, deleteUser);
+
+// ✅ Optional: Update any user (could also protect this as admin-only if needed)
+router.put('/:id', protect, updateUser);
 
 export default router;

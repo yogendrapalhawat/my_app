@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, trim: true, lowercase: true, match: /^[^\s@]+@[a-zA-Z0-9.-]+\.(ac\.in|edu|edu\.in)$/i}, //restricts to college emails
   password: {type: String, required: true, minlength: 8,  select: false},
   role: { type: String, enum: ['Student', 'Club'], default: 'Student'},
+  isAdmin: { type: Boolean, default: false } , // ✅ new field
   college: {type: mongoose.Schema.Types.ObjectId, ref:'College'},
   resumeLink: {type: String, trim: true},
   githubProfile: {type: String, trim: true, match: /^https:\/\/(www\.)?github\.com\/[A-Za-z0-9_-]+$/},
