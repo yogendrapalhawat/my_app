@@ -39,10 +39,14 @@ export const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, isAdmin: user.isAdmin },  // ✅ added isAdmin
-      process.env.JWT_SECRET,
+      {
+        userId: user._id,
+        isAdmin: user.isAdmin || false  // ⬅️ Include admin status
+      },
+      'secret',
       { expiresIn: '1d' }
     );
+    
 
     res.json({ token, user: { name: user.name, email: user.email } });
   } catch (err) {
