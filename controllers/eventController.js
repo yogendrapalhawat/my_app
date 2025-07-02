@@ -1,6 +1,11 @@
 import { Event } from '../DB.SCHEMA/Event.js';
 
-// Create Event
+// Ensure isFull method exists on Event model
+Event.schema.methods.isFull = function () {
+  return this.registeredUsers.length >= this.maxParticipants;
+};
+
+// ✅ Create Event
 export const createEvent = async (req, res) => {
   try {
     const event = await Event.create({ ...req.body, createdBy: req.user.userId });
@@ -10,7 +15,7 @@ export const createEvent = async (req, res) => {
   }
 };
 
-// Read All Events
+// ✅ Read All Events
 export const getAllEvents = async (req, res) => {
   try {
     const events = await Event.find().populate('registeredUsers', 'name email');
@@ -20,7 +25,7 @@ export const getAllEvents = async (req, res) => {
   }
 };
 
-// Update Event
+// ✅ Update Event
 export const updateEvent = async (req, res) => {
   try {
     const updated = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -31,7 +36,7 @@ export const updateEvent = async (req, res) => {
   }
 };
 
-// Delete Event
+// ✅ Delete Event
 export const deleteEvent = async (req, res) => {
   try {
     const deleted = await Event.findByIdAndDelete(req.params.id);
@@ -42,7 +47,7 @@ export const deleteEvent = async (req, res) => {
   }
 };
 
-// Register a user to an event
+// ✅ Register a user to an event
 export const registerToEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -65,7 +70,7 @@ export const registerToEvent = async (req, res) => {
   }
 };
 
-// Get events joined by current user
+// ✅ Get events joined by current user
 export const getMyEvents = async (req, res) => {
   try {
     const events = await Event.find({ registeredUsers: req.user.userId });
@@ -75,13 +80,12 @@ export const getMyEvents = async (req, res) => {
   }
 };
 
-// Leave an event
+// ✅ Leave an event
 export const leaveEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
-    // Remove user
     event.registeredUsers = event.registeredUsers.filter(
       u => u.toString() !== req.user.userId
     );
