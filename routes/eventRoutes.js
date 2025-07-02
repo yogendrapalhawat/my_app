@@ -11,12 +11,13 @@ import {
 } from '../controllers/eventController.js';
 
 import { protect } from '../middlewares/authMiddleware.js';
-import { isAdmin } from '../middlewares/adminMiddleware.js'; // (Optional, if you want to restrict event creation/deletion to admins)
+import { adminOnly } from '../middlewares/adminMiddleware.js'; // ✅ For admin-only protection (optional)
 
 const router = express.Router();
 
-// ✅ Create a new event (optionally admin only)
-router.post('/', protect, createEvent); // You can add isAdmin here if needed
+// ✅ Create a new event (currently for all logged-in users)
+router.post('/', protect, createEvent); 
+// If you want to allow only admins to create: router.post('/', protect, adminOnly, createEvent);
 
 // ✅ Get all events (Public)
 router.get('/', getAllEvents);
@@ -31,9 +32,11 @@ router.post('/:id/register', protect, registerToEvent);
 router.post('/:id/leave', protect, leaveEvent);
 
 // ✅ Update an event
-router.put('/:id', protect, updateEvent); // You can also use isAdmin if you want
+router.put('/:id', protect, updateEvent); 
+// To make update admin-only: router.put('/:id', protect, adminOnly, updateEvent);
 
 // ✅ Delete an event
-router.delete('/:id', protect, deleteEvent); // You can also use isAdmin if needed
+router.delete('/:id', protect, deleteEvent); 
+// To make delete admin-only: router.delete('/:id', protect, adminOnly, deleteEvent);
 
 export default router;
