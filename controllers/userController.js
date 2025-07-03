@@ -4,6 +4,19 @@ import { User } from '../DB.SCHEMA/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+// ✅ Generate JWT Token Helper
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      userId: user._id,
+      email: user.email,
+      isAdmin: user.isAdmin, // ✅ This must match the DB
+    },
+    process.env.JWT_SECRET || 'secret',
+    { expiresIn: '1d' }
+  );
+};
+
 // ✅ Register User
 export const registerUser = async (req, res) => {
   const { name, username, email, password } = req.body;
@@ -19,10 +32,18 @@ export const registerUser = async (req, res) => {
       name,
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
-    res.status(201).json({ message: 'User Registered', user });
+    res.status(201).json({
+      message: 'User Registered',
+      user: {
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin || false,
+      },
+      token: generateToken(user),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -38,22 +59,14 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign(
-      {
-        userId: user._id,
-        isAdmin: user.isAdmin || false
-      },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '1d' }
-    );
-
     res.json({
-      token,
+      message: 'Login successful',
       user: {
         name: user.name,
         email: user.email,
-        isAdmin: user.isAdmin || false
-      }
+        isAdmin: user.isAdmin || false,
+      },
+      token: generateToken(user), // ✅ Use helper
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -75,7 +88,6 @@ export const updateUser = async (req, res) => {
   try {
     const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updated) return res.status(404).json({ message: 'User not found' });
-
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -87,7 +99,6 @@ export const deleteUser = async (req, res) => {
   try {
     const deleted = await User.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'User not found' });
-
     res.json({ message: 'User deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
