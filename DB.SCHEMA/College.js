@@ -11,17 +11,19 @@ const collegeSchema = new mongoose.Schema(
     },
     domain: {
       type: String,
+      required: [true, 'Domain is required'],
+      unique: true,
+      lowercase: true,
+      trim: true,
       match: [
         /^[a-zA-Z0-9.-]+\.(ac\.in|edu|edu\.in)$/i,
         'Please provide a valid academic domain (e.g. nitdgp.ac.in)',
       ],
-      required: [true, 'Domain is required'],
-      unique: true,
-      lowercase: true,
     },
     location: {
       type: String,
       default: 'India',
+      trim: true,
     },
     verified: {
       type: Boolean,

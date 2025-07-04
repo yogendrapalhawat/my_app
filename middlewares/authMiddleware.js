@@ -1,30 +1,40 @@
+// backend/middlewares/authMiddleware.js
+
 import jwt from 'jsonwebtoken';
 import { User } from '../DB.SCHEMA/User.js';
 
-// 🔐 Middleware to protect routes using JWT
+/**
+ * 🔐 Middleware: Protect routes using JWT token
+ * Add this to any route to ensure user is authenticated
+ * 
+ * ✅ Example:
+ *    router.get('/dashboard', protect, controller)
+ */
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  // ✅ Check if token exists and starts with 'Bearer '
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
 
     try {
-      // 🔍 Verify JWT token
+      // 🔍 Decode & verify the token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // 🧑‍💻 Find user by ID from token (exclude password)
+      // 🔐 Find user from database (excluding password)
       const user = await User.findById(decoded.userId).select('-password');
 
-      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found ❌' });
+      }
 
-      // 🧾 Add user object to request
+      // ✅ Attach user info to req object
       req.user = user;
-      next(); // move to next middleware or controller
+      next();
     } catch (err) {
-      return res.status(401).json({ message: 'Invalid token' });
+      console.error('❌ JWT Verification Error:', err);
+      return res.status(401).json({ message: 'Invalid or expired token' });
     }
   } else {
-    return res.status(401).json({ message: 'Token not provided' });
+    return res.status(401).json({ message: 'Authorization token not provided' });
   }
 };

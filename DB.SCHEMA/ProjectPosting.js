@@ -6,12 +6,12 @@ const projectPostingSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
+      required: [true, 'Project title is required'],
       trim: true,
     },
     description: {
       type: String,
-      required: true,
+      required: [true, 'Project description is required'],
       trim: true,
     },
     postedBy: {
@@ -22,17 +22,38 @@ const projectPostingSchema = new mongoose.Schema(
 
     requiredRoles: [
       {
-        role: { type: String, required: true },
-        description: { type: String, trim: true },
-        count: { type: Number, required: true, min: 1 },
+        role: {
+          type: String,
+          required: [true, 'Role is required'],
+          trim: true,
+        },
+        description: {
+          type: String,
+          trim: true,
+        },
+        count: {
+          type: Number,
+          required: [true, 'Count is required'],
+          min: [1, 'Minimum 1 member required per role'],
+        },
       },
     ],
 
     applicants: [
       {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        message: { type: String },
-        appliedAt: { type: Date, default: Date.now },
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        message: {
+          type: String,
+          trim: true,
+        },
+        appliedAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
 
@@ -46,7 +67,10 @@ const projectPostingSchema = new mongoose.Schema(
         time: {
           type: String,
           required: true,
-          match: /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/, // HH:MM-HH:MM format
+          match: [
+            /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/,
+            'Time must be in HH:MM-HH:MM format',
+          ],
         },
       },
     ],
@@ -72,23 +96,26 @@ const projectPostingSchema = new mongoose.Schema(
       default: 'Open',
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
-// 📌 Indexes for fast searching and sorting
+// 📌 Indexes for search & performance
 projectPostingSchema.index({ title: 'text' });
 projectPostingSchema.index({ createdAt: -1, _id: -1 });
 
-// 🔁 Virtual field for frontend
+// 🆔 Virtual: projectId
 projectPostingSchema.virtual('projectId').get(function () {
   return this._id.toHexString();
 });
-projectPostingSchema.set('toJSON', { virtuals: true });
-projectPostingSchema.set('toObject', { virtuals: true });
 
 // ✅ Method: Check if all roles are filled
 projectPostingSchema.methods.isFull = function () {
   const roleCounts = {};
+
   for (const member of this.selectedUsers || []) {
     if (!member.role) continue;
     roleCounts[member.role] = (roleCounts[member.role] || 0) + 1;
@@ -102,7 +129,7 @@ projectPostingSchema.methods.isFull = function () {
   return true;
 };
 
-// 🧠 Auto close if all roles filled
+// 🧠 Hook: Auto-close project if full
 projectPostingSchema.pre('save', function (next) {
   if (this.isFull()) {
     this.status = 'Closed';

@@ -16,37 +16,41 @@ import { adminOnly } from '../middlewares/adminMiddleware.js';
 
 const router = express.Router();
 
-/* 
-📌 Base Route: /api/events
-   Examples:
-   - POST   /api/events/           => Create event
-   - GET    /api/events/           => Get all events
-   - POST   /api/events/:id/register => Register user to event
-   - GET    /api/events/my         => Events user joined
-*/
+/**
+ * 📌 Base Route: /api/events
+ * 
+ * ✅ Routes:
+ * - POST   /api/events/              → Create new event
+ * - GET    /api/events/              → Get all events
+ * - GET    /api/events/my            → Get events joined by user
+ * - POST   /api/events/:id/register  → Register to event
+ * - POST   /api/events/:id/leave     → Leave event
+ * - PUT    /api/events/:id           → Update event
+ * - DELETE /api/events/:id           → Delete event
+ */
 
-// ✅ Create Event (any logged-in user can create; or make admin-only if needed)
+// ✅ Create Event (accessible by any authenticated user)
 router.post('/', protect, createEvent);
-// router.post('/', protect, adminOnly, createEvent); // optional
+// router.post('/', protect, adminOnly, createEvent); // 👉 Enable this if only admin can create
 
-// ✅ Get All Events (Public)
+// ✅ Get All Events (public)
 router.get('/', getAllEvents);
 
-// ✅ Get Events Joined by Current User
+// ✅ Get Events Joined by Logged-in User
 router.get('/my', protect, getMyEvents);
 
-// ✅ Register User to an Event
+// ✅ Register to an Event
 router.post('/:id/register', protect, registerToEvent);
 
-// ✅ Leave Event
+// ✅ Leave an Event
 router.post('/:id/leave', protect, leaveEvent);
 
-// ✅ Update Event (by creator or admin)
+// ✅ Update Event (auth required)
 router.put('/:id', protect, updateEvent);
-// router.put('/:id', protect, adminOnly, updateEvent); // optional
+// router.put('/:id', protect, adminOnly, updateEvent); // 👉 Enable if only admin can update
 
-// ✅ Delete Event (by creator or admin)
+// ✅ Delete Event (auth required)
 router.delete('/:id', protect, deleteEvent);
-// router.delete('/:id', protect, adminOnly, deleteEvent); // optional
+// router.delete('/:id', protect, adminOnly, deleteEvent); // 👉 Enable if only admin can delete
 
 export default router;

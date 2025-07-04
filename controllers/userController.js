@@ -110,8 +110,14 @@ export const updateUser = async (req, res) => {
       { new: true }
     ).select('-password');
 
-    if (!updatedUser) return res.status(404).json({ message: 'User not found' });
-    res.json(updatedUser);
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      message: '✅ User updated successfully',
+      user: updatedUser
+    });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -121,7 +127,9 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const deleted = await User.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'User not found' });
+    if (!deleted) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     res.json({ message: '✅ User deleted successfully' });
   } catch (err) {
@@ -133,9 +141,17 @@ export const deleteUser = async (req, res) => {
 export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    res.json(user);
+    res.json({
+      id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      isAdmin: user.isAdmin
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

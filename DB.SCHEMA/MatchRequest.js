@@ -40,6 +40,7 @@ const matchRequestSchema = new mongoose.Schema(
         },
         role: {
           type: String,
+          trim: true,
         },
         description: {
           type: String,
@@ -63,22 +64,24 @@ const matchRequestSchema = new mongoose.Schema(
       default: 'Pending',
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
-// 🔁 Virtual field for requestId
+// 🆔 Virtual: requestId
 matchRequestSchema.virtual('requestId').get(function () {
   return this._id.toHexString();
 });
-matchRequestSchema.set('toJSON', { virtuals: true });
-matchRequestSchema.set('toObject', { virtuals: true });
 
-// ✅ Custom Method: Check if team is full
+// ✅ Method: Check if team is full
 matchRequestSchema.methods.isTeamFull = function () {
   return this.selectedUsers.length >= this.maxTeamSize;
 };
 
-// ⏱ Pre-save hook to update status
+// 🛠 Hook: Auto-update status if full
 matchRequestSchema.pre('save', function (next) {
   if (this.isTeamFull()) {
     this.status = 'Matched';

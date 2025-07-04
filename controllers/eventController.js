@@ -25,6 +25,7 @@ export const createEvent = async (req, res) => {
       maxParticipants
     } = req.body;
 
+    // 🔍 Field validation
     if (
       !title || !description || !tag || !status || !startDate ||
       !endDate || !location || !organizer || !registrationLink || !maxParticipants
@@ -55,7 +56,10 @@ export const createEvent = async (req, res) => {
 // ✅ Read All Events
 export const getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find().populate('registeredUsers', 'name email');
+    const events = await Event.find()
+      .populate('registeredUsers', 'name email')
+      .populate('createdBy', 'name email');
+
     res.status(200).json(events);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -65,9 +69,14 @@ export const getAllEvents = async (req, res) => {
 // ✅ Update Event
 export const updateEvent = async (req, res) => {
   try {
-    const updated = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updated = await Event.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
     if (!updated) return res.status(404).json({ message: 'Event not found' });
-    res.json(updated);
+
+    res.json({ message: '✅ Event updated', updated });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -78,6 +87,7 @@ export const deleteEvent = async (req, res) => {
   try {
     const deleted = await Event.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Event not found' });
+
     res.json({ message: '✅ Event deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -128,6 +138,7 @@ export const leaveEvent = async (req, res) => {
       return res.status(400).json({ message: "You are not registered for this event" });
     }
 
+    // Remove user from registeredUsers
     event.registeredUsers = event.registeredUsers.filter(
       id => id.toString() !== req.user.userId
     );
