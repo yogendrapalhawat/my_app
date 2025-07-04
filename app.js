@@ -15,7 +15,7 @@ const app = express();
 
 // ✅ Middleware: Enable CORS for frontend (local + deployed)
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://your-frontend-url.onrender.com'], // Add your frontend URL here
+  origin: ['http://localhost:3000', 'https://one-portal-frontend.onrender.com'], // <-- apne frontend ka correct deployed URL
   credentials: true
 }));
 
