@@ -1,28 +1,32 @@
-// backend/server.js or backend/index.js
+// backend/server.js OR backend/index.js
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './config/db.js'; // adjust path if needed
-
+import connectDB from './config/db.js'; // ✅ DB connection function
 import userRoutes from './routes/userRoutes.js';
-import eventRoutes from './routes/eventRoutes.js'; // ✅ Import event routes
+import eventRoutes from './routes/eventRoutes.js';
 
-dotenv.config();
-connectDB();
+dotenv.config(); // ✅ Load environment variables from .env
+connectDB();      // ✅ Connect to MongoDB
 
 const app = express();
 
+// ✅ Middlewares
 app.use(cors());
-app.use(express.json()); // to parse JSON bodies
+app.use(express.json()); // To parse incoming JSON requests
 
-// ✅ Mount API routes
-app.use('/api/users', userRoutes);
-app.use('/api/events', eventRoutes);  // ✅ This line links events backend
+// ✅ API Routes
+app.use('/api/users', userRoutes);   // Login, Register, Profile, etc.
+app.use('/api/events', eventRoutes); // Create, Register, Leave, MyEvents, etc.
 
-// ✅ Basic test route
+// ✅ Health Check Route
 app.get('/', (req, res) => {
-  res.send('API is running...');
+  res.send('🎓 One Portal API is Running...');
 });
 
+// ✅ Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

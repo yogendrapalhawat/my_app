@@ -1,15 +1,52 @@
+// backend/controllers/eventController.js
+
 import { Event } from '../DB.SCHEMA/Event.js';
 
-// Ensure isFull method exists on Event model
-Event.schema.methods.isFull = function () {
-  return this.registeredUsers.length >= this.maxParticipants;
-};
+// ✅ Add method on Event schema to check if full
+if (!Event.schema.methods.isFull) {
+  Event.schema.methods.isFull = function () {
+    return this.registeredUsers.length >= this.maxParticipants;
+  };
+}
 
 // ✅ Create Event
 export const createEvent = async (req, res) => {
   try {
-    const event = await Event.create({ ...req.body, createdBy: req.user.userId });
-    res.status(201).json({ message: 'Event Created', event });
+    const {
+      title,
+      description,
+      tag,
+      status,
+      startDate,
+      endDate,
+      location,
+      organizer,
+      registrationLink,
+      maxParticipants
+    } = req.body;
+
+    if (
+      !title || !description || !tag || !status || !startDate ||
+      !endDate || !location || !organizer || !registrationLink || !maxParticipants
+    ) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const event = await Event.create({
+      title,
+      description,
+      tag,
+      status,
+      startDate,
+      endDate,
+      location,
+      organizer,
+      registrationLink,
+      maxParticipants,
+      createdBy: req.user.userId
+    });
+
+    res.status(201).json({ message: '✅ Event Created Successfully', event });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -41,36 +78,36 @@ export const deleteEvent = async (req, res) => {
   try {
     const deleted = await Event.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Event not found' });
-    res.json({ message: 'Event deleted' });
+    res.json({ message: '✅ Event deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ✅ Register a user to an event
+// ✅ Register to Event
 export const registerToEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
     if (event.registeredUsers.includes(req.user.userId)) {
-      return res.status(400).json({ message: "Already registered for this event" });
+      return res.status(400).json({ message: "You are already registered for this event" });
     }
 
     if (event.isFull()) {
-      return res.status(400).json({ message: "Event is full" });
+      return res.status(400).json({ message: "This event is full" });
     }
 
     event.registeredUsers.push(req.user.userId);
     await event.save();
 
-    res.json({ message: "Registration successful", event });
+    res.json({ message: "✅ Registered successfully", event });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ✅ Get events joined by current user
+// ✅ My Joined Events
 export const getMyEvents = async (req, res) => {
   try {
     const events = await Event.find({ registeredUsers: req.user.userId });
@@ -80,18 +117,23 @@ export const getMyEvents = async (req, res) => {
   }
 };
 
-// ✅ Leave an event
+// ✅ Leave Event
 export const leaveEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
+    const wasRegistered = event.registeredUsers.includes(req.user.userId);
+    if (!wasRegistered) {
+      return res.status(400).json({ message: "You are not registered for this event" });
+    }
+
     event.registeredUsers = event.registeredUsers.filter(
-      u => u.toString() !== req.user.userId
+      id => id.toString() !== req.user.userId
     );
 
     await event.save();
-    res.json({ message: "Left the event successfully", event });
+    res.json({ message: "✅ You have left the event", event });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

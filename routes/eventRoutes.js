@@ -1,4 +1,5 @@
 // backend/routes/eventRoutes.js
+
 import express from 'express';
 import {
   createEvent,
@@ -11,37 +12,41 @@ import {
 } from '../controllers/eventController.js';
 
 import { protect } from '../middlewares/authMiddleware.js';
-import { adminOnly } from '../middlewares/adminMiddleware.js'; // Optional: restrict some routes to admins
+import { adminOnly } from '../middlewares/adminMiddleware.js';
 
 const router = express.Router();
 
 /* 
-📌 All routes under /api/events 
-  Example: POST /api/events/:id/register
+📌 Base Route: /api/events
+   Examples:
+   - POST   /api/events/           => Create event
+   - GET    /api/events/           => Get all events
+   - POST   /api/events/:id/register => Register user to event
+   - GET    /api/events/my         => Events user joined
 */
 
-// ✅ Create new event (any logged-in user can create)
-router.post('/', protect, createEvent); 
-// To restrict to admins: router.post('/', protect, adminOnly, createEvent);
+// ✅ Create Event (any logged-in user can create; or make admin-only if needed)
+router.post('/', protect, createEvent);
+// router.post('/', protect, adminOnly, createEvent); // optional
 
-// ✅ Get all events
-router.get('/', getAllEvents);  // Public or protected — currently public
+// ✅ Get All Events (Public)
+router.get('/', getAllEvents);
 
-// ✅ Get events joined by the logged-in user
+// ✅ Get Events Joined by Current User
 router.get('/my', protect, getMyEvents);
 
-// ✅ Register a user to an event
+// ✅ Register User to an Event
 router.post('/:id/register', protect, registerToEvent);
 
-// ✅ Leave an event
+// ✅ Leave Event
 router.post('/:id/leave', protect, leaveEvent);
 
-// ✅ Update an event
-router.put('/:id', protect, updateEvent); 
-// If you want: router.put('/:id', protect, adminOnly, updateEvent);
+// ✅ Update Event (by creator or admin)
+router.put('/:id', protect, updateEvent);
+// router.put('/:id', protect, adminOnly, updateEvent); // optional
 
-// ✅ Delete an event
-router.delete('/:id', protect, deleteEvent); 
-// If admin-only: router.delete('/:id', protect, adminOnly, deleteEvent);
+// ✅ Delete Event (by creator or admin)
+router.delete('/:id', protect, deleteEvent);
+// router.delete('/:id', protect, adminOnly, deleteEvent); // optional
 
 export default router;

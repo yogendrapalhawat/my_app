@@ -4,15 +4,15 @@ import { User } from '../DB.SCHEMA/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// ✅ Generate JWT Token Helper
+// ✅ JWT Token Generator
 const generateToken = (user) => {
   return jwt.sign(
     {
       userId: user._id,
       email: user.email,
-      isAdmin: user.isAdmin, // ✅ This must match the DB
+      isAdmin: user.isAdmin || false,
     },
-    process.env.JWT_SECRET || 'secret',
+    process.env.JWT_SECRET || 'secret_key',
     { expiresIn: '1d' }
   );
 };
@@ -21,14 +21,19 @@ const generateToken = (user) => {
 export const registerUser = async (req, res) => {
   const { name, username, email, password } = req.body;
 
+  if (!name || !username || !email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
   try {
-    const existing = await User.findOne({ email });
-    if (existing) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
+
+    const newUser = await User.create({
       name,
       username,
       email,
@@ -36,13 +41,15 @@ export const registerUser = async (req, res) => {
     });
 
     res.status(201).json({
-      message: 'User Registered',
+      message: '✅ User Registered Successfully',
       user: {
-        name: user.name,
-        email: user.email,
-        isAdmin: user.isAdmin || false,
+        id: newUser._id,
+        name: newUser.name,
+        username: newUser.username,
+        email: newUser.email,
+        isAdmin: newUser.isAdmin || false,
       },
-      token: generateToken(user),
+      token: generateToken(newUser),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -53,27 +60,38 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and Password are required" });
+  }
+
   try {
     const user = await User.findOne({ email }).select('+password');
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     res.json({
-      message: 'Login successful',
+      message: '✅ Login Successful',
       user: {
+        id: user._id,
         name: user.name,
+        username: user.username,
         email: user.email,
         isAdmin: user.isAdmin || false,
       },
-      token: generateToken(user), // ✅ Use helper
+      token: generateToken(user),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ✅ Get All Users
+// ✅ Get All Users (Admin)
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -83,23 +101,41 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// ✅ Update User
+// ✅ Update User (Admin)
 export const updateUser = async (req, res) => {
   try {
-    const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: 'User not found' });
-    res.json(updated);
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) return res.status(404).json({ message: 'User not found' });
+    res.json(updatedUser);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 };
 
-// ✅ Delete User
+// ✅ Delete User (Admin)
 export const deleteUser = async (req, res) => {
   try {
     const deleted = await User.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'User not found' });
-    res.json({ message: 'User deleted' });
+
+    res.json({ message: '✅ User deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ✅ Get Profile (Protected Route)
+export const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
