@@ -5,16 +5,22 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
+// ✅ Import Routes
 import userRoutes from './routes/userRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 
-dotenv.config(); // ✅ Load .env variables like MONGO_URI and JWT_SECRET
+dotenv.config(); // Load environment variables from .env
 
 const app = express();
 
-// ✅ Middlewares
-app.use(cors()); // Allows frontend to communicate with backend (CORS enabled)
-app.use(express.json()); // Automatically parses incoming JSON payloads
+// ✅ Middleware: Enable CORS for frontend (local + deployed)
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://your-frontend-url.onrender.com'], // Add your frontend URL here
+  credentials: true
+}));
+
+// ✅ Middleware: Parse JSON request bodies
+app.use(express.json());
 
 // ✅ Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGO_URI, {
@@ -22,18 +28,13 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true
 })
 .then(() => console.log('✅ MongoDB Atlas Connected'))
-.catch((err) => console.error('❌ MongoDB Error:', err.message));
+.catch((err) => console.error('❌ MongoDB Error:', err));
 
-// ✅ API Routes (as per your folder structure)
-app.use('/api/users', userRoutes);   // All user-related routes: register, login, profile, etc.
-app.use('/api/events', eventRoutes); // All event-related routes: create, register, leave, etc.
+// ✅ Routes
+app.use('/api/users', userRoutes);   // All user related routes
+app.use('/api/events', eventRoutes); // All event related routes
 
-// ✅ Default route (optional health check)
-app.get('/', (req, res) => {
-  res.send('🎓 One Portal Backend is Running');
-});
-
-// ✅ Start Server
+// ✅ Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
