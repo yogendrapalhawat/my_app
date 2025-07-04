@@ -1,28 +1,31 @@
-// backend/app.js
-
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-// ✅ Import Routes
 import userRoutes from './routes/userRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 
-dotenv.config(); // Load environment variables from .env
+dotenv.config();
 
 const app = express();
 
-// ✅ Middleware: Enable CORS for frontend (local + deployed)
+// ✅ CORS setup (include Vercel frontend)
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://one-portal-frontend.onrender.com'], // <-- apne frontend ka correct deployed URL
+  origin: [
+    'http://localhost:3000',
+    'https://frontend2-phi-sepia.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
-// ✅ Middleware: Parse JSON request bodies
+app.options('*', cors()); // Handle preflight requests
+
+// ✅ JSON middleware
 app.use(express.json());
 
-// ✅ Connect to MongoDB Atlas
+// ✅ MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -31,10 +34,10 @@ mongoose.connect(process.env.MONGO_URI, {
 .catch((err) => console.error('❌ MongoDB Error:', err));
 
 // ✅ Routes
-app.use('/api/users', userRoutes);   // All user related routes
-app.use('/api/events', eventRoutes); // All event related routes
+app.use('/api/users', userRoutes);
+app.use('/api/events', eventRoutes);
 
-// ✅ Start the server
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
