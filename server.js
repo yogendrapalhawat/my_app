@@ -13,7 +13,7 @@ connectDB();
 
 const app = express();
 
-// ✅ Correct CORS setup (with allowed origins)
+// ✅ Allow frontend origins
 const allowedOrigins = [
   'http://localhost:3000',
   'https://frontend2-phi-sepia.vercel.app'
@@ -28,19 +28,23 @@ const corsOptions = {
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,
+  credentials: true
 };
 
+// ✅ Apply CORS
 app.use(cors(corsOptions));
 
-// ✅ Middleware
+// ✅ Handle preflight requests for all routes
+app.options('*', cors(corsOptions));
+
+// ✅ JSON parser
 app.use(express.json());
 
 // ✅ Routes
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 
-// ✅ Test route
+// ✅ Test Route
 app.get('/', (req, res) => {
   res.send('🎓 One Portal API is Running...');
 });
