@@ -8,36 +8,30 @@ import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 
-// ✅ Load env variables
 dotenv.config();
-
-// ✅ Connect to MongoDB
 connectDB();
 
 const app = express();
 
-// ✅ CORS Fix: Allow local + deployed frontend & handle preflight
+// ✅ Correct CORS setup (with allowed origins)
 const allowedOrigins = [
   'http://localhost:3000',
   'https://frontend2-phi-sepia.vercel.app'
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('CORS Not Allowed'));
-      }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true
-  })
-);
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+};
 
-// ✅ Handle preflight requests
-app.options('*', cors());
+app.use(cors(corsOptions));
 
 // ✅ Middleware
 app.use(express.json());
