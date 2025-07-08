@@ -4,7 +4,7 @@ import { User } from '../DB.SCHEMA/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// ✅ JWT Token Generator
+// ✅ Generate JWT Token
 const generateToken = (user) => {
   return jwt.sign(
     {
@@ -19,10 +19,15 @@ const generateToken = (user) => {
 
 // ✅ Register User
 export const registerUser = async (req, res) => {
-  const { name, username, email, password } = req.body;
+  const { name, username, email, password, confirmPassword, role } = req.body;
 
-  if (!name || !username || !email || !password) {
-    return res.status(400).json({ message: "All fields are required" });
+  // 🔍 Validate required fields
+  if (!name || !username || !email || !password || !confirmPassword) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ message: 'Passwords do not match' });
   }
 
   try {
@@ -38,6 +43,7 @@ export const registerUser = async (req, res) => {
       username,
       email,
       password: hashedPassword,
+      isAdmin: role === 'admin', // ✅ Frontend sends 'admin' or 'user'
     });
 
     res.status(201).json({
@@ -47,7 +53,7 @@ export const registerUser = async (req, res) => {
         name: newUser.name,
         username: newUser.username,
         email: newUser.email,
-        isAdmin: newUser.isAdmin || false,
+        isAdmin: newUser.isAdmin,
       },
       token: generateToken(newUser),
     });
@@ -56,24 +62,34 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// ✅ Login User
+// ✅ Login User (with debug logs)
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
+  console.log("🟡 Login Attempt:", email, password);
+
   if (!email || !password) {
-    return res.status(400).json({ message: "Email and Password are required" });
+    return res.status(400).json({ message: 'Email and password are required' });
   }
 
   try {
     const user = await User.findOne({ email }).select('+password');
+
     if (!user) {
+      console.log("🔴 User not found for:", email);
       return res.status(401).json({ message: 'User not found' });
     }
 
+    console.log("🟢 User Found:", user.email);
+
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
+      console.log("🔴 Password mismatch for:", email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+
+    console.log("✅ Password matched for:", email);
 
     res.json({
       message: '✅ Login Successful',
@@ -82,16 +98,37 @@ export const loginUser = async (req, res) => {
         name: user.name,
         username: user.username,
         email: user.email,
-        isAdmin: user.isAdmin || false,
+        isAdmin: user.isAdmin,
       },
       token: generateToken(user),
+    });
+  } catch (err) {
+    console.error("❌ Login Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ✅ Get Logged-in User Profile
+export const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      isAdmin: user.isAdmin,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ✅ Get All Users (Admin)
+// ✅ Get All Users (Admin Only)
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -116,7 +153,7 @@ export const updateUser = async (req, res) => {
 
     res.json({
       message: '✅ User updated successfully',
-      user: updatedUser
+      user: updatedUser,
     });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -132,26 +169,6 @@ export const deleteUser = async (req, res) => {
     }
 
     res.json({ message: '✅ User deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// ✅ Get Profile (Protected Route)
-export const getUserProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({
-      id: user._id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      isAdmin: user.isAdmin
-    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

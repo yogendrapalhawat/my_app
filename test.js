@@ -3,6 +3,7 @@
 
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs'; // ✅ Hash passwords
 dotenv.config();
 
 // ✅ Import Schemas
@@ -19,6 +20,15 @@ mongoose.connect(process.env.MONGO_URI)
 
 async function seedData() {
   try {
+    // 🔄 Clear existing data (optional but useful for testing)
+    await Promise.all([
+      User.deleteMany({}),
+      College.deleteMany({}),
+      Event.deleteMany({}),
+      MatchRequest.deleteMany({}),
+      ProjectPosting.deleteMany({})
+    ]);
+
     // 🏫 Create College
     const college = await College.create({
       name: 'IIT Bombay',
@@ -27,12 +37,15 @@ async function seedData() {
       verified: true
     });
 
+    // 🔐 Hash password
+    const hashedPassword = await bcrypt.hash('securePass1234', 10);
+
     // 👤 Create User
     const student = await User.create({
       name: 'Keshav Kumar',
       username: 'keashav_k',
       email: 'keshav@iitb.ac.in',
-      password: 'securePass1234', // Plaintext for now
+      password: hashedPassword,
       role: 'Student',
       college: college._id,
       resumeLink: 'https://drive.google.com/resume',
@@ -84,7 +97,7 @@ async function seedData() {
   } catch (err) {
     console.error('❌ Error inserting data:', err.message);
   } finally {
-    await mongoose.disconnect(); // ✅ modern disconnect (no callback)
+    await mongoose.disconnect();
     console.log('🔌 MongoDB disconnected');
   }
 }

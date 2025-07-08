@@ -1,5 +1,3 @@
-// backend/routes/eventRoutes.js
-
 import express from 'express';
 import {
   createEvent,
@@ -18,7 +16,7 @@ const router = express.Router();
 
 /**
  * 📌 Base Route: /api/events
- * 
+ *
  * ✅ Routes:
  * - POST   /api/events/              → Create new event
  * - GET    /api/events/              → Get all events
@@ -29,14 +27,14 @@ const router = express.Router();
  * - DELETE /api/events/:id           → Delete event
  */
 
-// ✅ Create Event (accessible by any authenticated user)
+// ✅ Create Event (any logged-in user)
 router.post('/', protect, createEvent);
 // router.post('/', protect, adminOnly, createEvent); // 👉 Enable this if only admin can create
 
-// ✅ Get All Events (public)
+// ✅ Get All Events (Public)
 router.get('/', getAllEvents);
 
-// ✅ Get Events Joined by Logged-in User
+// ✅ Get Events joined by current user
 router.get('/my', protect, getMyEvents);
 
 // ✅ Register to an Event
@@ -45,11 +43,11 @@ router.post('/:id/register', protect, registerToEvent);
 // ✅ Leave an Event
 router.post('/:id/leave', protect, leaveEvent);
 
-// ✅ Update Event (auth required)
+// ✅ Update Event (Logged-in user OR admin)
 router.put('/:id', protect, updateEvent);
 // router.put('/:id', protect, adminOnly, updateEvent); // 👉 Enable if only admin can update
 
-// ✅ Delete Event (auth required)
+// ✅ Delete Event (Logged-in user OR admin)
 router.delete('/:id', protect, deleteEvent);
 // router.delete('/:id', protect, adminOnly, deleteEvent); // 👉 Enable if only admin can delete
 

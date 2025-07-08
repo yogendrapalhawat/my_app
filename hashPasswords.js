@@ -1,4 +1,6 @@
+// backend/DB.SCHEMA/User.js
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
@@ -38,7 +40,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Password is required'],
       minlength: [8, 'Password must be at least 8 characters'],
-      select: false, // Exclude password by default from queries
+      select: false, // Hide password in find()
     },
 
     role: {
@@ -71,19 +73,8 @@ const userSchema = new mongoose.Schema(
       ],
     },
 
-    interests: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
-
-    skills: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
+    interests: [String],
+    skills: [String],
 
     participatedEvents: [
       {
@@ -104,8 +95,20 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// ✅ Indexes for quick lookup
+// ✅ Indexes
 userSchema.index({ username: 1 });
 userSchema.index({ email: 1 });
+
+// ✅ Hash password before saving
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next(); // skip if unchanged
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 export const User = mongoose.model('User', userSchema);

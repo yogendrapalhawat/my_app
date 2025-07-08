@@ -2,50 +2,61 @@
 
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import bcrypt from "bcryptjs";
 import { User } from "./DB.SCHEMA/User.js";
 import { College } from "./DB.SCHEMA/College.js";
 
-// 🔐 Load environment variables (for MONGO_URI if needed)
+// 🔐 Load .env file
 dotenv.config();
 
-// ✅ 1. Connect to MongoDB (local or .env-based)
+// ✅ 1. Connect to MongoDB Atlas or fallback to local
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/my-app";
 
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log("✅ MongoDB Connected");
-  insertData();  // 👉 Start seeding after successful connection
-})
-.catch(err => {
-  console.error("❌ MongoDB Connection Error:", err.message);
-});
+mongoose
+  .connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("✅ MongoDB Connected");
+    insertData(); // Start inserting after DB connection
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB Connection Error:", err.message);
+  });
 
-// ✅ 2. Insert Sample Data
+// ✅ 2. Insert College + User
 const insertData = async () => {
   try {
-    // 🏫 Create College
+    // 💥 Clean up existing records (optional)
+    await College.deleteMany();
+    await User.deleteMany();
+
+    // 🏫 Insert Sample College
     const gla = await College.create({
       name: "GLA University",
-      domain: "gla.ac.in"
+      domain: "gla.ac.in",
+      location: "Mathura, India",
+      verified: true,
     });
 
-    // 👤 Create Sample User
+    // 🔐 Hash password
+    const hashedPassword = await bcrypt.hash("password123", 10);
+
+    // 👤 Insert Sample User
     const user = await User.create({
       name: "Yogendra Palhawat",
       username: "yogendra123",
       email: "yogendra@gla.ac.in",
-      password: "password123", // ⚠️ NOTE: This is not hashed! Login won't work until bcrypt is applied
+      password: hashedPassword,
       role: "Student",
       college: gla._id,
       githubProfile: "https://github.com/yogendra",
       interests: ["Hackathons", "AI"],
-      skills: ["Node.js", "MongoDB"]
+      skills: ["Node.js", "MongoDB"],
     });
 
-    console.log("🎉 Sample data inserted successfully");
+    console.log("🎉 Sample College + User seeded successfully");
   } catch (err) {
     console.error("❌ Insert Error:", err.message);
   } finally {

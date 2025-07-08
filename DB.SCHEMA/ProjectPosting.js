@@ -1,9 +1,8 @@
-// backend/DB.SCHEMA/ProjectPosting.js
-
 import mongoose from 'mongoose';
 
 const projectPostingSchema = new mongoose.Schema(
   {
+    // 📌 Basic Details
     title: {
       type: String,
       required: [true, 'Project title is required'],
@@ -14,12 +13,15 @@ const projectPostingSchema = new mongoose.Schema(
       required: [true, 'Project description is required'],
       trim: true,
     },
+
+    // 👤 Who posted this project
     postedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
 
+    // 🧑‍💻 Required Roles for Project
     requiredRoles: [
       {
         role: {
@@ -34,11 +36,12 @@ const projectPostingSchema = new mongoose.Schema(
         count: {
           type: Number,
           required: [true, 'Count is required'],
-          min: [1, 'Minimum 1 member required per role'],
+          min: [1, 'At least 1 person required for the role'],
         },
       },
     ],
 
+    // 📥 Applicants applying to join
     applicants: [
       {
         user: {
@@ -57,11 +60,20 @@ const projectPostingSchema = new mongoose.Schema(
       },
     ],
 
+    // 📅 Availability schedule
     availability: [
       {
         day: {
           type: String,
-          enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+          enum: [
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday',
+          ],
           required: true,
         },
         time: {
@@ -75,6 +87,7 @@ const projectPostingSchema = new mongoose.Schema(
       },
     ],
 
+    // ✅ Finalized Team Members
     selectedUsers: [
       {
         user: {
@@ -90,6 +103,7 @@ const projectPostingSchema = new mongoose.Schema(
       },
     ],
 
+    // 🔐 Project Status
     status: {
       type: String,
       enum: ['Open', 'Closed'],
@@ -103,16 +117,22 @@ const projectPostingSchema = new mongoose.Schema(
   }
 );
 
-// 📌 Indexes for search & performance
+//
+// 🔍 Indexes for fast querying
+//
 projectPostingSchema.index({ title: 'text' });
 projectPostingSchema.index({ createdAt: -1, _id: -1 });
 
-// 🆔 Virtual: projectId
+//
+// 🆔 Virtual field
+//
 projectPostingSchema.virtual('projectId').get(function () {
   return this._id.toHexString();
 });
 
+//
 // ✅ Method: Check if all roles are filled
+//
 projectPostingSchema.methods.isFull = function () {
   const roleCounts = {};
 
@@ -129,7 +149,9 @@ projectPostingSchema.methods.isFull = function () {
   return true;
 };
 
-// 🧠 Hook: Auto-close project if full
+//
+// 🧠 Pre-save Hook: Auto-close if full
+//
 projectPostingSchema.pre('save', function (next) {
   if (this.isFull()) {
     this.status = 'Closed';
@@ -137,4 +159,7 @@ projectPostingSchema.pre('save', function (next) {
   next();
 });
 
+//
+// ✅ Final export
+//
 export const ProjectPosting = mongoose.model('ProjectPosting', projectPostingSchema);
