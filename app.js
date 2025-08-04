@@ -16,7 +16,7 @@ app.use(
   cors({
     origin: [
       'http://localhost:3000',
-      'scintillating-pie-e7e24e.netlify.app'
+      'https://frontend2-phi-sepia.vercel.app'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
