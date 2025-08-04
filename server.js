@@ -15,7 +15,7 @@ const app = express();
 
 // ✅ CORS Configuration
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://frontend2-phi-sepia.vercel.app'],
+  origin: ['http://localhost:3000', 'scintillating-pie-e7e24e.netlify.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
